@@ -1,0 +1,281 @@
+1.
+CREATE TABLE Owner ( 
+Owner_ID NUMBER (10) CONSTRAINT okk_id PRIMARY KEY,
+Owner_Name VARCHAR2(32),
+Owner_Address VARCHAR2 (50)
+)
+
+CREATE SEQUENCE owner_id_seq
+    START WITH 100
+    INCREMENT BY 1
+    NOCACHE;
+    
+CREATE OR REPLACE TRIGGER owner_id_trigger
+BEFORE INSERT ON owner
+FOR EACH ROW
+BEGIN
+    SELECT owner_id_seq.NEXTVAL INTO :new.Owner_ID FROM dual;
+END;
+
+desc owner;
+
+
+2.
+CREATE TABLE owner_contact (
+Owner_ID NUMBER (10) not null,
+Owner_Phone_Num NUMBER (10) UNIQUE NOT NULL,
+FOREIGN KEY (Owner_ID) REFERENCES owner (Owner_ID)
+)
+
+desc owner_contact;
+
+
+3.
+create table Manager( 
+MGR_ID number (10) CONSTRAINT mkk_id primary key,
+Mgr_Name Varchar2 (30),
+Mgr_Salary number (30) not null,
+Mgr_Role varchar2 (30),
+Owner_ID number (10),
+foreign key (Owner_ID) references owner (Owner_ID)
+)
+
+ALTER TABLE Manager
+MODIFY Owner_ID number (10) NOT NULL;
+
+CREATE SEQUENCE mgr_id_seq
+    START WITH 200
+    INCREMENT BY 1
+    NOCACHE;
+    
+CREATE OR REPLACE TRIGGER mgr_id_trigger
+BEFORE INSERT ON Manager
+FOR EACH ROW
+BEGIN
+    SELECT mgr_id_seq.NEXTVAL INTO :new.MGR_ID FROM dual;
+END;
+
+desc Manager ;
+
+
+4.
+create table Mgr_Contact ( 
+MGR_ID number (10),
+Mgr_Phone_Num number(15) not null,
+foreign key(Mgr_ID) references Manager (Mgr_ID)
+)
+
+alter table Mgr_Contact
+add constraint uniqueMgrNumber UNIQUE (Mgr_Phone_Num);
+
+desc Mgr_Contact; 
+
+
+5.
+create table Parking_Space (
+Space_ID number (10) primary key,
+Space_Type varchar2 (20),
+Space_Address varchar2 (50)
+)
+
+create sequence space_id_seq
+    start with 100
+    increment by 2
+    nocache;
+    
+CREATE OR REPLACE TRIGGER space_id_trigger
+BEFORE INSERT ON Parking_Space
+FOR EACH ROW
+BEGIN
+    SELECT space_id_seq.NEXTVAL INTO :new.Space_ID FROM dual;
+END;
+
+desc Parking_Space;
+
+
+6.
+create table mgr_space(
+Space_ID number (10),
+Mgr_ID number (10),
+foreign key(Mgr_ID) references Manager (Mgr_ID),
+foreign key(space_ID) references parking_space (space_ID)
+)
+
+Desc mgr_space;
+
+
+7.
+create table Parking_Spot (
+Spot_ID number (10) primary key,
+Spot_type Varchar2 (20),
+Space_ID number (10),
+foreign key(Space_ID) references parking_space (Space_ID),
+constraint st_kk check (Spot_type in ('small','large','medium'))
+)
+
+create sequence spot_id_seq
+    start with 100
+    increment by 2
+    nocache;
+    
+CREATE OR REPLACE TRIGGER spot_id_trigger
+BEFORE INSERT ON Parking_Spot
+FOR EACH ROW
+BEGIN
+    SELECT spot_id_seq.NEXTVAL INTO :new.Spot_ID FROM dual;
+END;
+
+Desc parking_spot;
+
+
+8.
+create table Parking_Slip(
+Slip_ID number (10) primary key,
+Slip_type Varchar2 (50),
+Duration number (20) not null,
+Issue_date date,
+Spot_ID number (10),
+foreign key(Spot_ID) references parking_spot (Spot_ID),
+constraint slt_kk check (Slip_type in ('small','large','medium'))
+)
+
+create sequence slip_id_seq
+    start with 100
+    increment by 2
+    nocache;
+    
+CREATE OR REPLACE TRIGGER slip_id_trigger
+BEFORE INSERT ON Parking_Slip
+FOR EACH ROW
+BEGIN
+    SELECT slip_id_seq.NEXTVAL INTO :new.Slip_ID FROM dual;
+END;
+
+Desc parking_slip;
+
+
+9.
+create table Driver (
+Dri_ID number(10) primary key,
+dri_First_name Varchar2 (32),
+dri_Last_name Varchar2 (32),
+dri_Email varchar2 (16) unique,
+dri_address varchar2 (50)
+)
+
+create sequence driver_id_seq
+    start with 100
+    increment by 2
+    nocache;
+    
+CREATE OR REPLACE TRIGGER driver_id_trigger
+BEFORE INSERT ON Driver
+FOR EACH ROW
+BEGIN
+    SELECT driver_id_seq.NEXTVAL INTO :new.Dri_ID FROM dual;
+END;
+
+desc driver;
+
+
+10.
+create table Driver_contact (
+Dri_ID number(10) ,
+dri_Phone_Num number(16) unique,
+foreign key (Dri_ID) references driver (Dri_ID)
+)
+
+desc driver_contact;
+
+
+11.
+create table Driver_slip(
+Dri_ID number(10) ,
+Slip_ID number (10),
+foreign key (Dri_ID) references driver (Dri_ID),
+foreign key (slip_ID) references parking_slip (slip_ID)
+)
+
+desc driver_slip;
+
+
+12.
+create table Rate (
+Rate_ID number(10) primary key, 
+rate_type Varchar2(16) not null,
+hourly_rate number(16),
+day_rate number(16),
+constraint at_least_one_not_null_rate check (hourly_rate IS NOT NULL OR day_rate IS NOT NULL),
+constraint rt_kk check (rate_type in('hour', 'day'))
+)
+
+create sequence rate_id_seq
+    start with 100
+    increment by 2
+    nocache;
+    
+CREATE OR REPLACE TRIGGER rate_id_trigger
+BEFORE INSERT ON Rate
+FOR EACH ROW
+BEGIN
+    SELECT rate_id_seq.NEXTVAL INTO :new.Rate_ID FROM dual;
+END;
+
+desc rate;
+
+
+13.
+create table Fine(
+Fine_ID number(10) primary key,
+Amount number (30) not null,
+Issue_date date not null,
+Paid_date date
+)
+
+create sequence fine_id_seq
+    start with 100
+    increment by 2
+    nocache;
+    
+CREATE OR REPLACE TRIGGER fine_id_trigger
+BEFORE INSERT ON Fine
+FOR EACH ROW
+BEGIN
+    SELECT fine_id_seq.NEXTVAL INTO :new.Fine_ID FROM dual;
+END;
+
+desc Fine;
+
+
+14.
+create table dri_Fine(
+Fine_ID number (10),
+Dri_id number (10),
+foreign key (Dri_ID) references driver (Dri_ID),
+foreign key (Fine_ID) references fine (Fine_ID)
+)
+
+desc dri_Fine;
+
+
+15.
+create table Vehicle(
+Veh_Nameplate number(16) primary key,
+Veh_Type varchar2(12) not null,
+Dri_id number(10),
+foreign key(dri_id) references driver(dri_id),
+constraint vt_kk check(Veh_Type in ('bike', 'car', 'truck'))
+)
+
+desc Vehicle;
+
+
+16.
+create table Vehicle_spot(
+Veh_Nameplate number(16) not null,
+spot_id number(10) not null,
+foreign key(veh_nameplate) references vehicle (veh_nameplate),
+foreign key(spot_id) references parking_spot (spot_id)
+);
+
+desc Vehicle_spot;
